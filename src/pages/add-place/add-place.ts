@@ -1,8 +1,9 @@
 import { Component } from '@angular/core';
-import { IonicPage, NavController, NavParams, ModalController } from 'ionic-angular';
+import {ToastController, LoadingController,  IonicPage,   NavController,   NavParams,   ModalController} from 'ionic-angular';
 import { NgForm } from "@angular/forms/forms";
 import { SetLocation } from '../set-location/set-location';
 import { Location } from '../../models/location';
+import { Geolocation } from '@ionic-native/geolocation';
 
 /**
  * Generated class for the AddPlace page.
@@ -25,7 +26,10 @@ export class AddPlace {
   locationIsSet = false;
 
   constructor(public navCtrl: NavController, public navParams: NavParams,
-              private modalCtrl: ModalController) {
+              private modalCtrl: ModalController,
+              private geolocation: Geolocation,
+              private loadingCtrl: LoadingController,
+              private toastCtrl: ToastController) {
   }
 
   ionViewDidLoad() {
@@ -48,6 +52,28 @@ export class AddPlace {
         }
       }
     );
+  }
+
+  onLocate() {
+    const loader = this.loadingCtrl.create({
+      content: 'Getting your Location...'
+    });
+    loader.present();
+    this.geolocation.getCurrentPosition().then(
+      location => {
+        loader.dismiss();
+        this.location.lat = location.coords.latitude;
+        this.location.lng = location.coords.longitude;
+        this.locationIsSet = true;
+    }).catch((error) => {
+      loader.dismiss();
+      const toast = this.toastCtrl.create({
+        message: 'Could not get location, please pick it manually',
+        duration: 2500
+      });
+      console.log('Error getting location', error);
+      toast.present();
+    });
   }
 
 }

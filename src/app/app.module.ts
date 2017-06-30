@@ -10,6 +10,7 @@ import { AddPlace } from '../pages/add-place/add-place';
 import { Place } from '../pages/place/place';
 import { SetLocation } from '../pages/set-location/set-location';
 import { AgmCoreModule } from 'angular2-google-maps/core';
+import { Geolocation } from '@ionic-native/geolocation';
 
 @NgModule({
   declarations: [
@@ -37,7 +38,8 @@ import { AgmCoreModule } from 'angular2-google-maps/core';
   providers: [
     StatusBar,
     SplashScreen,
-    {provide: ErrorHandler, useClass: IonicErrorHandler}
+    {provide: ErrorHandler, useClass: IonicErrorHandler},
+    Geolocation
   ]
 })
 export class AppModule {}
