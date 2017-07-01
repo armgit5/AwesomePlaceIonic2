@@ -1,9 +1,12 @@
 import { Component } from '@angular/core';
-import {ToastController, LoadingController,  IonicPage,   NavController,   NavParams,   ModalController} from 'ionic-angular';
+import { ToastController, LoadingController, IonicPage, NavController, NavParams, ModalController } from 'ionic-angular';
 import { NgForm } from "@angular/forms/forms";
 import { SetLocation } from '../set-location/set-location';
 import { Location } from '../../models/location';
 import { Geolocation } from '@ionic-native/geolocation';
+import { Camera } from '@ionic-native/camera';
+import { PlacesService } from '../../services/places';
+import { File } from '@ionic-native/file';
 
 /**
  * Generated class for the AddPlace page.
@@ -25,11 +28,16 @@ export class AddPlace {
 
   locationIsSet = false;
 
+  imageUrl = '';
+
   constructor(public navCtrl: NavController, public navParams: NavParams,
               private modalCtrl: ModalController,
               private geolocation: Geolocation,
               private loadingCtrl: LoadingController,
-              private toastCtrl: ToastController) {
+              private toastCtrl: ToastController,
+              private camera: Camera,
+              private placesService: PlacesService,
+              private file: File) {
   }
 
   ionViewDidLoad() {
@@ -37,7 +45,15 @@ export class AddPlace {
   }
 
   onSubmit(form: NgForm) {
-    console.log(form.value);
+    this.placesService.addPlace(form.value.title, form.value.description, 
+        this.location, this.imageUrl);
+    form.reset();
+    this.location = {
+      lat: 40.7624324,
+      lng: -73.9759827
+    }
+    this.imageUrl = '';
+    this.locationIsSet = false;
   }
 
   onOpenMap() {
@@ -74,6 +90,58 @@ export class AddPlace {
       console.log('Error getting location', error);
       toast.present();
     });
+  }
+
+  onTakePhoto() {
+    this.camera.getPicture({
+      encodingType: this.camera.EncodingType.JPEG,
+      correctOrientation: true
+    })
+    .then(
+      imageData => {
+        const currentName = imageData.replace(/^.*[\\\/]/, '');
+        const path = imageData.replace(/[^\/]*$/, '');
+        const newFileName = new Date().getUTCMilliseconds() + '.jpg';
+
+        console.log("current name and path");
+        // console.log(currentName);
+        // console.log(path);
+        // console.log(`1 ${imageData}`);
+
+        this.file.moveFile(path, currentName, this.file.dataDirectory, newFileName)
+          .then(
+            data => {
+              this.imageUrl = data.nativeURL;
+              // console.log(`2 ${data.nativeURL}`);
+              this.camera.cleanup();
+              // console.log(`3 ${imageData}`);
+            }
+          )
+          .catch(
+            err => {
+              this.imageUrl = '';
+              const toast = this.toastCtrl.create({
+                message: 'Could not save this image. Please try again.',
+                duration: 2500
+              });
+              toast.present();
+              this.camera.cleanup();
+            }  
+          );
+        this.imageUrl = imageData;
+        // console.log(`4 ${imageData}`);
+
+      }
+    )
+    .catch(
+      err => {
+        const toast = this.toastCtrl.create({
+          message: 'Could not take this image. Please try again.',
+          duration: 2500
+        });
+        toast.present();
+      }
+    );
   }
 
 }
